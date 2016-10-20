@@ -81,8 +81,8 @@ def apf(obs, time, n_particles, n_gridpoints, B, Sigma, Gamma, x_0, I_ext):
     (X) : an n_particles x time x dimension tensor of trajectories
     (k) : an n_particles x time matrix of the posterior integral for each particle at each time point
 
-    Averaging the trajectory tensor across particles approximates the functional integral
-    The predicted signals obtained by averaging X may also be smoothed by applying a moving average
+    Averaging the trajectory tensor (X) across particles approximates the functional integral. Smooth the
+    resulting signal to remove noise.
     '''
     assert(len(obs) == time)
 
@@ -120,6 +120,7 @@ def apf(obs, time, n_particles, n_gridpoints, B, Sigma, Gamma, x_0, I_ext):
             g_mean = np.dot(B,X[i,t,:])
             g_int_func = make_mvn_pdf(g_mean,Gamma)
             k[i,t] = bivariate_gauss_hermite(xt, wt, fhn(X[i,t-1,:],delta_t,I_ext), T, g_int_func, XX, YY)
+            # Reweight particles
             W[i,t-1] = W[i,t-1]*k[i,t]
 
         # Resample
@@ -132,10 +133,12 @@ def apf(obs, time, n_particles, n_gridpoints, B, Sigma, Gamma, x_0, I_ext):
             X[i,t-1,:] = Xtilde[i]
             # Resample particles and reset weights
             X[i,t,:] = np.random.randn(1,dimension)[0] + X[i,t-1,:]
+            # Update proposal and target distributions
             reshaped_g_mean = np.dot(B,X[i,t,:]).ravel()
             g = make_mvn_pdf(reshaped_g_mean,Gamma)(obs[t,:])
             q = make_mvn_pdf(X[i,t-1,:],proposal_covariance_matrix)(X[i,t,:])
             f = make_mvn_pdf(fhn(X[i,t-1,:],delta_t,I_ext),Sigma)(X[i,t,:])
+            # Update weights
             W[i,t] = (g*f)/(k[i,t]*q)
 
         print "time: ", t
