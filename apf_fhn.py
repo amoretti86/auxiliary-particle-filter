@@ -1,9 +1,9 @@
 '''
-Implements the Fully Adapted Auxiliary Particle Filter as described by Whiteley and Johansen
+An implementation of the Fully Adapted Auxiliary Particle Filter as described by Whiteley and Johansen
 Chapter 3 Algorithm 2 on page 5 of Recent Developments in Auxiliary Particle Filtering:
 http://www.maths.bris.ac.uk/~manpw/apf_chapter.pdf
 
-The algorithm is modified to perform inference in nonlinear dynamical systems and supports
+The algorithm is taylored to perform inference in nonlinear dynamical systems and supports
 the Fitzhugh Nagumo model (or Van der Pol Oscillator)
 
 by Antonio Moretti - amoretti@cs.columbia.edu
@@ -17,11 +17,17 @@ from scipy.stats import norm
 from scipy import misc
 
 def make_mvn_pdf(mu, sigma):
+    
+    ''' creates a multivariate gaussian pdf '''
+    
     def f(x):
         return sp.stats.multivariate_normal.pdf(x, mu, sigma)
     return f
 
 def make_poisson(k):
+    
+    ''' creates a multivariate poisson pmf '''
+    
     def f(theta):
         prob = 1
         for i in range(len(k)):
@@ -30,6 +36,9 @@ def make_poisson(k):
     return f
 
 def fhn(Y, deltat, I):
+    '''
+    first order euler discretization of the fitzhugh nagumo differential equations
+    '''
     y1 = Y[0]
     y2 = Y[1]
     return [y1 + (y1 - (y1**3)/3 - y2 + I)*deltat, y2 + (0.08*(y1 + 0.7 - 0.8*y2))*deltat]
@@ -66,22 +75,22 @@ def apf(obs, time, n_particles, n_gridpoints, B, Sigma, Gamma, x_0, I_ext):
     Algorithm 2 on page 5: http://www.maths.bris.ac.uk/~manpw/apf_chapter.pdf
 
     Input: 
-    (obs):          a time x dimension matrix representing a time series of observed signals
-    (time):         a scalar representing the corresponding time length
-    (n_particles):  a scalar representing the number of particles to use in the simulation
-    (n_gridpoints): a scalar representing the number of grid points or nodes to use for the quadrature
-    (B):            a 2x2 propagator matrix for the dynamics
-    (Sigma):        a 2x2 covariance matrix
-    (Gamma):        a 2x2 covariance matrix
-    (x_0):          a 2x1 vector of representing the initial value of the signal
-    (I_ext):        a scalar representing input current magnitude
+    [obs]           : a time x dimension matrix representing a time series of observed signals
+    [time]          : a scalar representing the corresponding time length
+    [n_particles]   : a scalar representing the number of particles to use in the simulation
+    [n_gridpoints]  : a scalar representing the number of grid points or nodes to use for the quadrature
+    [B]             : a 2x2 propagator matrix for the dynamics
+    [Sigma]         : a 2x2 covariance matrix
+    [Gamma]         : a 2x2 covariance matrix
+    [x_0]           : a 2x1 vector of representing the initial value of the signal
+    [I_ext]         : a scalar representing input current magnitude
 
     Output: 
-    (W) : an n_particles x time matrix of weights
-    (X) : an n_particles x time x dimension tensor of trajectories
-    (k) : an n_particles x time matrix of the posterior integral for each particle at each time point
+    [W]             : an n_particles x time matrix of weights
+    [X]             : an n_particles x time x dimension tensor of trajectories
+    [k]             : an n_particles x time matrix of the posterior integral for each particle at each time point
 
-    Averaging the trajectory tensor (X) across particles approximates the functional integral. Smooth the
+    Average the trajectory tensor (X) across particles to approximate the functional integral. Smooth the
     resulting signal to remove noise.
     '''
     assert(len(obs) == time)
@@ -143,5 +152,3 @@ def apf(obs, time, n_particles, n_gridpoints, B, Sigma, Gamma, x_0, I_ext):
 
         print "time: ", t
     return W, X, k
-
-
