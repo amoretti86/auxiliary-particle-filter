@@ -17,17 +17,17 @@ from scipy.stats import norm
 from scipy import misc
 
 def make_mvn_pdf(mu, sigma):
-    
-    ''' creates a multivariate gaussian pdf '''
-    
+    ''' 
+    creates a multivariate gaussian pdf 
+    '''
     def f(x):
         return sp.stats.multivariate_normal.pdf(x, mu, sigma)
     return f
 
 def make_poisson(k):
-    
-    ''' creates a multivariate poisson pmf '''
-    
+    ''' 
+    creates a multivariate poisson pmf 
+    '''
     def f(theta):
         prob = 1
         for i in range(len(k)):
@@ -98,37 +98,49 @@ def apf(obs, time, n_particles, n_gridpoints, B, Sigma, Gamma, x_0, I_ext):
     # Initialize variables
     dimension = 2
     n_gridpoints = n_gridpoints
-
     X = np.zeros((n_particles, time, dimension))
     W = np.zeros((n_particles, time))
     k = np.zeros((n_particles, time))
     proposal_covariance_matrix = 0.075*np.eye(dimension)
     delta_t = 0.25
-
+    
+    # Define gridpoints as roots of the hermite polynomials
     [xt, wt] = np.polynomial.hermite.hermgauss(n_gridpoints)
+    
     # TO DO: generalize the computation of posterior integral
+    # Define our mesh for numerical integration
     XX = np.tile(xt.reshape([1, len(xt)]), [len(xt), 1])
     YY = np.tile(xt.reshape([len(xt), 1]), [1, len(xt)])
+    # Compute Cholesky decomposition of Sigma
     T = sp.linalg.sqrtm(Sigma)
 
-    # sample particles and weights at time 1
+    # Sample particles and weights at time 1
     import pdb
     for i in range(0,n_particles):
+        
         X[i,0,:] = np.random.randn(1,dimension)[0] 
         g = make_mvn_pdf(x_0, Gamma)(obs[0,:])#(np.dot(B,X[i,0,:])).ravel()
         nu = make_mvn_pdf(x_0, Sigma)(X[i,0,:])
         q = make_mvn_pdf(np.zeros(dimension), proposal_covariance_matrix)(X[i,0,:])
+        
+        # initialize weights
         W[i,0] = g*nu/q
     
     # main loop of program at time > 1
     for t in range(1, time):
-
+        
         # Update weights and propagate particles based on postrior integral
         for i in range(n_particles):
+            
             # Compute the posterior integral p(y_n | x_{n-1})
+            
+            # Define the mean of the Gaussian
             g_mean = np.dot(B,X[i,t,:])
             g_int_func = make_mvn_pdf(g_mean,Gamma)
-            k[i,t] = bivariate_gauss_hermite(xt, wt, fhn(X[i,t-1,:],delta_t,I_ext), T, g_int_func, XX, YY)
+            
+            # Call our quadrature subroutine
+            k[i,t] = bivariate_gauss_hermite(xt, wt, fhn(X[i,t-1,:], delta_t, I_ext), T, g_int_func, XX, YY)
+            
             # Reweight particles
             W[i,t-1] = W[i,t-1]*k[i,t]
 
@@ -138,17 +150,21 @@ def apf(obs, time, n_particles, n_gridpoints, B, Sigma, Gamma, x_0, I_ext):
 
         # Reset weights and particles
         for i in range(n_particles):
+            
             # Select new particles            
             X[i,t-1,:] = Xtilde[i]
+            
             # Resample particles and reset weights
             X[i,t,:] = np.random.randn(1,dimension)[0] + X[i,t-1,:]
+            
             # Update proposal and target distributions
             reshaped_g_mean = np.dot(B,X[i,t,:]).ravel()
             g = make_mvn_pdf(reshaped_g_mean,Gamma)(obs[t,:])
             q = make_mvn_pdf(X[i,t-1,:],proposal_covariance_matrix)(X[i,t,:])
             f = make_mvn_pdf(fhn(X[i,t-1,:],delta_t,I_ext),Sigma)(X[i,t,:])
+            
             # Update weights
             W[i,t] = (g*f)/(k[i,t]*q)
-
+            
         print "time: ", t
     return W, X, k
