@@ -128,41 +128,30 @@ def apf(obs, time, n_particles, n_gridpoints, B, Sigma, Gamma, x_0, I_ext):
     
     # main loop of program at time > 1
     for t in range(1, time):
-        
         # Update weights and propagate particles based on postrior integral
-        for i in range(n_particles):
-            
+        for i in range(n_particles):            
             # Compute the posterior integral p(y_n | x_{n-1})
-            
             # Define the mean of the Gaussian
             g_mean = np.dot(B,X[i,t,:])
-            g_int_func = make_mvn_pdf(g_mean,Gamma)
-            
+            g_int_func = make_mvn_pdf(g_mean,Gamma)            
             # Call our quadrature subroutine
-            k[i,t] = bivariate_gauss_hermite(xt, wt, fhn(X[i,t-1,:], delta_t, I_ext), T, g_int_func, XX, YY)
-            
+            k[i,t] = bivariate_gauss_hermite(xt, wt, fhn(X[i,t-1,:], delta_t, I_ext), T, g_int_func, XX, YY)            
             # Reweight particles
-            W[i,t-1] = W[i,t-1]*k[i,t]
-
+            W[i,t-1] = W[i,t-1]*k[i,t]            
         # Resample
         Xprime = np.random.choice(n_particles, n_particles, p = W[:,t-1]/np.sum(W[:,t-1]), replace = True)
         Xtilde = [X[i,t-1,:] for i in Xprime]
-
-        # Reset weights and particles
-        for i in range(n_particles):
-            
+        # Reset weights and particles        
+        for i in range(n_particles):                   
             # Select new particles            
-            X[i,t-1,:] = Xtilde[i]
-            
+            X[i,t-1,:] = Xtilde[i]            
             # Resample particles and reset weights
-            X[i,t,:] = np.random.randn(1,dimension)[0] + X[i,t-1,:]
-            
+            X[i,t,:] = np.random.randn(1,dimension)[0] + X[i,t-1,:]            
             # Update proposal and target distributions
             reshaped_g_mean = np.dot(B,X[i,t,:]).ravel()
             g = make_mvn_pdf(reshaped_g_mean,Gamma)(obs[t,:])
             q = make_mvn_pdf(X[i,t-1,:],proposal_covariance_matrix)(X[i,t,:])
-            f = make_mvn_pdf(fhn(X[i,t-1,:],delta_t,I_ext),Sigma)(X[i,t,:])
-            
+            f = make_mvn_pdf(fhn(X[i,t-1,:],delta_t,I_ext),Sigma)(X[i,t,:])           
             # Update weights
             W[i,t] = (g*f)/(k[i,t]*q)
             
