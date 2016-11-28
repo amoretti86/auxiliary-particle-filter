@@ -1,6 +1,7 @@
 '''
 Simulates data for the FitsHugh Nagumo (FHN) Biophysical model by solving the resulting differential equations
-Parameter values are hard coded according to Scholarpedia (see below) but can easily be changed.
+Parameter values are hard coded according to Scholarpedia (see below) but can easily be changed. Note ode45 is
+nondeterministic and sometimes returns null values. 
 
 http://www.scholarpedia.org/article/FitzHugh-Nagumo_model
 
