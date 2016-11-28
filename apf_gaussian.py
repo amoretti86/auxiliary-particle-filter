@@ -1,12 +1,9 @@
 '''
-Implements the Fully Adapted Auxiliary Particle Filter
-as described by Whiteley and Johansen 
+An implementation of the Fully Adapted Auxiliary Particle Filter as described by Whiteley and Johansen
+Chapter 3 Algorithm 2 on page 5 of Recent Developments in Auxiliary Particle Filtering:
+http://www.maths.bris.ac.uk/~manpw/apf_chapter.pdf
 
-Algorithm 2 on page 5 of Chapter 3 in Recent Developments in 
-Auxiliary Particle Filtering: http://www.maths.bris.ac.uk/~manpw/apf_chapter.pdf
-
-Demo is included below for a two dimensional state space model with
-Gaussian process and measurements. 
+Demo is included for a two dimensional state space with Gaussian process and measurement models. 
 
 By Antonio Moretti: amoretti@cs.columbia.edu
 '''
