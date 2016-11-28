@@ -1,7 +1,7 @@
 '''
 Creates synthetic data for the Poisson Linear Dynamical System according to the following recursions:
 
-x_t = Ax_{t-1} + Sigma^{1/2}\epsilon    where x ~ N(Ax_{t,1}, Sigma^{1/2})
+x_t = Ax_{t-1} + Sigma^{1/2}epsilon    where x ~ N(Ax_{t,1}, Sigma^{1/2})
 y_t = Pois(exp(Bx_t)) + \eta            where y ~ Pois(exp(Bx_t))
 
 by Antonio Moretti - amoretti@cs.columbia.edu
